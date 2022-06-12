@@ -1,0 +1,101 @@
+1.Installation laravel 9
+2.$ composer require laravel/breeze --dev
+3.$ php artisan breeze:install api //this will remove all files from resources/views folder, becoz we dont need any view for API
+
+4.Creating API controller
+$ php artisan make:controller API/V1/ArticleController -m Article --api //it will create index(),store(),show(),update() and destroy with model binding Article..we dont need create() and edit() in API.
+$ php artisan make:controller  API/V1/AuthorController
+
+5.Creating API Resource Collection
+$ php artisan make:resource V1/ArticleResource
+$ php artisan make:resource V1/ArticleCollection -c
+$ php artisan make:resource V1/AuthorResource
+
+
+6.Api Route
+in RouteServiceProvider: for api version controlling purpose
+ //default api route is http://127.0.0.1:8000/api/articles
+ //now after changing prefix, http://127.0.0.1:8000/api/v1/articles
+      Route::middleware('api')
+            ->prefix('api/v1')
+            ->group(base_path('routes/api_v1.php'));
+      Route::middleware('api')
+            ->prefix('api/v2')
+            ->group(base_path('routes/api_v2.php'));
+      Route::middleware('api')
+            ->prefix('api/v3')
+            ->group(base_path('routes/api_v3.php'));
+
+Or we can do it by using prefix in api.php routes
+http://127.0.0.1:8000/api/v1/articles
+Route::group(['prefix'=>'v1','middleware'=>'auth:sanctum'],function(){
+    //Articles Route
+    Route::apiResource('/articles',ArticleController::class);
+
+    //Author Routes, {user} can be either id or slug
+    Route::get('/authors/{user}',[AuthorController::class,'show'])->name('authors');
+});
+
+in RouteServiceProvider
+//Get articles by ID or SLUG, $value is either id or slug
+        Route::bind('article',function($value){
+            return \App\Models\Article::where('id',$value)->orWhere('slug',$value)->firstOrFail();
+});
+
+
+Now Open postman
+1.create environment Laravel9
+key:BASE_URL
+value:http://127.0.0.1:8000/api/v1
+
+Now choose environment Laravel9
+URL:{{BASE_URL}}/articles
+
+
+
+2.Adding Custom Exception handler
+Go to Exceptions/Handler folder
+  public function register()
+    {
+   $this->renderable(function(NotFoundHttpException $e,$request){
+            //if request is coming from any api routes
+            if($request->is('api/*')){
+                return response()->json([
+                    'error'=>[
+                        'message'=>'Resource not found',
+                        'type'=>'NotFoundHttpException',
+                        'code'=>'404',
+                        'status_code'=>$e->getStatusCode(),
+                        'link'=>'https://www.techtarget.com/whatis/definition/404-status-code#:~:text=404%20is%20a%20status%20code,find%20a%20client%2Drequested%20webpage.'
+                    ]
+
+                ],404);
+
+            }
+
+        });
+}
+
+
+
+NOTE: laravel breeze le auth.php ma authenticated api routes haru create garxa
+For Login:http://127.0.0.1:8000/login
+for Register:http://127.0.0.1:8000/register
+
+"message": "CSRF token mismatch." error hatauna
+
+go to middleware/VerifyCsrfToken
+ protected $except = [
+        'api/*',
+        '/login',
+        '/register'
+    ];
+
+
+
+
+
+
+3.Create UserController
+$ php artisan make:controller API/V1/UserController -i //i for _invoke()
+$ php artisan make:resource V1/UserResource
