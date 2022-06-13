@@ -23,8 +23,6 @@ class AuthController extends Controller
             'password' => 'required',
 
         ];
-
-
         $validator = Validator::make($credentials, $rules);
         if ($validator->fails()) {
             return response()->json([
@@ -35,48 +33,77 @@ class AuthController extends Controller
         }
 
             $user = User::where('email', $input['email'])->first();
-            //check if user exists
-            if (!$user) {
+
+            if ($user) {
+                if(Hash::check($request->password,$user->password)){
+                    $token = $user->createToken('token')->plainTextToken;
+                    $cookie = cookie('jwt', $token, 60 * 24); // 1 day
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                         ],
+                        'token'=>$token,
+                        'message' => 'Login Success!'
+                    ])->withCookie($cookie);
+
+                }else{
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Password did not match!'
+                    ], 401);
+
+                }
+
+
+            }else{
+
                 return response()->json([
                     'success' => false,
                     'message' => 'User Not Found!'
                 ], 400);
+
             }
-             try {
 
 
-                if (!Auth::attempt($request->only('email', 'password'))) {
-
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid User'
-                    ], 400);
-                }
 
 
-                $user = Auth::user();
+    }
 
-                $token = $user->createToken('token')->plainTextToken;
-                $cookie = cookie('jwt', $token, 60 * 24); // 1 day
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'token'=>$token
 
-                    ],
-                    'message' => trans('messages.login.success')
-                ])->withCookie($cookie);
-            } catch (Exception $e) {
+    public function register(Request $request){
 
-                // something went wrong while attempting to encode the token
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Something went wrong'
-                ], 500);
-            }
+        $rules = [
+            'name'=>'required|string|min:2|max:50',
+            'email'=>'required|email|unique:users',
+            'password'=>'required|min:5|max:50',
+            'confirm_password'=>'required|same:password'
+
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message'=>'Validation Failed.',
+                'errors' => $validator->messages()
+            ], 422);
+        }
+
+        $user=User::create([
+            'name'=>$request->input('name'),
+            'email'=>$request->input('email'),
+            'password'=>Hash::make($request->password),
+
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $user,
+            'message' => 'Registration success!'
+        ],201);
+
 
     }
 
@@ -87,11 +114,16 @@ class AuthController extends Controller
 		$request->user()->currentAccessToken()->delete();
 		//$request->user->tokens()->delete(); // use this to revoke all tokens (logout from all devices)
         // auth()->user()->tokens()->delete();
-		return response()->json(null, 200);
+		return response()->json(['message'=>'User successfully logout', 200]);
 	}
 
     public function getAuthenticatedUser(Request $request) {
-		return $request->user();
+        return response()->json([
+            'success' => true,
+            'data' => $request->user(),
+
+        ],200);
+
 	}
 
 

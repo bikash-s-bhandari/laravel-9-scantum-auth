@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix'=>'v1/auth'],function(){
     Route::post('/login',[AuthController::class,'login']);
+    Route::post('/register',[AuthController::class,'register']);
 
 });
 
@@ -33,4 +34,8 @@ Route::group(['prefix'=>'v1','middleware'=>'auth:sanctum'],function(){
 
     //User
     Route::get('/user',UserController::class);//invoke function ko lagi yesari lekhna milxa
+
+    Route::get('/logout',[AuthController::class,'logout']);
+    //get current authenticated user
+    Route::get('/me',[AuthController::class,'getAuthenticatedUser']);
 });
