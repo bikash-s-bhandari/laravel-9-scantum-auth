@@ -7,6 +7,7 @@ use App\Models\Blog;
 use Illuminate\Http\Request;
 use App\Http\Controllers\CommonApiController;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Storage;
 
 class BlogController extends CommonApiController
 {
@@ -103,8 +104,12 @@ class BlogController extends CommonApiController
         $image_name=null;
 
         if($request->image){
-            $image_name=time().'.'.$request->image->extension();
-            $request->image->move(public_path('/uploads/blog_images'),$image_name);
+            // $image_name=time().'.'.$request->image->extension();
+            // $request->image->move(public_path('/uploads/blog_images'),$image_name);
+
+            $path = Storage::disk('s3')->put('images', $request->image);
+            $path = Storage::disk('s3')->url($path);
+            $image_name=$path;
 
         }
 
@@ -120,7 +125,7 @@ class BlogController extends CommonApiController
 
         ]);
 
-        $blog->with(['user','category']);
+
 
         return response()->json([
             'success'=>true,
