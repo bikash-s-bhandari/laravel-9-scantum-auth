@@ -11,10 +11,32 @@ use Illuminate\Support\Facades\Storage;
 
 class BlogController extends CommonApiController
 {
-    /**
-     * Display a listing of the resource.
+   /**
+     * @OA\Get(
+     *      path="/api/v1/blogs",
+     *      operationId="getBlogList",
+     *      tags={"Blog"},
+     *      summary="Get list of Blogs",
+     *      description="Returns list of blogs",
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation"
      *
-     * @return \Illuminate\Http\Response
+     *       ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Bad Request"
+     *      )
+     *     ),
+     *    security={ {"bearer": {}} }
      */
     public function index(Request $request)
     {
@@ -82,10 +104,42 @@ class BlogController extends CommonApiController
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *      path="/api/v1/blogs",
+     *      operationId="store",
+     *      tags={"Blog"},
+     *      summary="Create New Blog",
+     *      description="Create New Blog",
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     *      @OA\RequestBody(
+     *          required=true,
+     *        @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="title", type="string",          example="Title of blog"),
+     *              @OA\Property(property="short_description", type="string", example="short description..."),
+     *              @OA\Property(property="long_description", type="string", example="long description...."),
+     *           @OA\Property(property="category_id", type="integer", example="1"),
+     *              @OA\Property(property="image", type="string", example=""),
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation"
+     *
+     *       ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Bad Request"
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     * )
      */
     public function store(Request $request)
     {
